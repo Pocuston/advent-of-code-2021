@@ -8,16 +8,17 @@ const commands = inputDataString.split("\r\n");
 
 const initialPosition = {
   horizontal: 0,
-  depth: 0
+  depth: 0,
+  aim: 0
 };
 
-const { horizontal: totalHorizontal, depth: totalDepth} = commands.reduce(({horizontal, depth}, currentCommand) => {
+const { horizontal: totalHorizontal, depth: totalDepth} = commands.reduce(({horizontal, depth, aim}, currentCommand) => {
   const [commandType, commandValue] = parseCommand(currentCommand);
   switch (commandType) {
-    case "forward": return { horizontal: horizontal + commandValue, depth };
-    case "up": return { horizontal, depth: depth - commandValue};
-    case "down": return { horizontal, depth: depth + commandValue };
-    default: return { horizontal, depth };
+    case "forward": return { horizontal: horizontal + commandValue, depth: depth + aim * commandValue, aim };
+    case "up": return { horizontal, depth, aim: aim - commandValue};
+    case "down": return { horizontal, depth, aim: aim + commandValue};
+    default: return { horizontal, depth, aim };
   }
 
 }, initialPosition);
