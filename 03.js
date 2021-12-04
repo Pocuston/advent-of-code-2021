@@ -4,44 +4,61 @@ const inputFileHandle = await open("./data/03.txt");
 const inputDataString = await inputFileHandle.readFile({encoding: "utf-8"});
 await inputFileHandle.close();
 
-const diagnosticReport = inputDataString.split("\r\n");
-const wordLength = diagnosticReport[0].length;
+const inputDataLines = inputDataString.split("\r\n")
+const wordLength = inputDataLines[0].length;
+const diagnosticReport = inputDataLines.map(numberString => parseInt(numberString, 2));
 
-const initialGammaBitCount = Array.from({length: wordLength}, () => 0);
+const oxygenRating = findOxygenGeneratorRating(diagnosticReport);
+const co2ScrubberRating = findCo2ScrubberRating(diagnosticReport);
 
-const totalGammaBitCount = diagnosticReport.reduce((gammaBitCount, currentWord) => {
-  const currentWordBits = currentWord.split("");
-  currentWordBits.forEach((bit, i) => {
-    if (bit === "1") {
-      gammaBitCount[i]++;
-    }});
+console.log("Oxygen rating:", oxygenRating);
+console.log("CO2 scrubber rating:", co2ScrubberRating);
 
-  return gammaBitCount;
+console.log("Result: ", oxygenRating * co2ScrubberRating);
 
-}, initialGammaBitCount);
+function findOxygenGeneratorRating(numbers) {
+  return findRatingValue(numbers, getMostCommonBitAtIndex);
+}
 
-const halfOfDiagnosticReportLength = diagnosticReport.length / 2;
-const gammaRate = totalGammaBitCount.map(gammaBitCount => gammaBitCount > halfOfDiagnosticReportLength);
-const epsilonRate = gammaRate.map(gammaRateBit => !gammaRateBit);
+function getMostCommonBitAtIndex(numbers, bitIndex) {
+  const initialScore = 0;
 
-const gammaRateBinaryString = binaryArrayToString(gammaRate);
-const epsilonRateBinaryString = binaryArrayToString(epsilonRate);
+  const totalScore = numbers.reduce((score, currentNumber) => {
+    return score + (getBitAtIndex(currentNumber, bitIndex) === 1 ? 1 : -1);
+  }, initialScore);
 
-console.log("Gamma rate: ", gammaRateBinaryString);
-console.log("Epsilon rate: ", epsilonRateBinaryString);
+  return totalScore >= 0 ? 1 : 0;
+}
 
-const gammaRateDecimal = parseInt(gammaRateBinaryString, 2);
-const epsilonRateDecimal = parseInt(epsilonRateBinaryString, 2);
+function findCo2ScrubberRating(numbers) {
+  return findRatingValue(numbers, getLeastCommonBitAtIndex);
+}
 
-console.log("Gamma rate decimal: ", gammaRateDecimal);
-console.log("Epsilon rate decimal: ", epsilonRateDecimal);
+function findRatingValue(numbers, bitCriteriaFunction) {
+  let bitIndex = wordLength - 1;
+  while (numbers.length > 1) {
+    const bitCriteria = bitCriteriaFunction(numbers, bitIndex);
+    numbers = filterNumbersByBitAtIndex(numbers, bitIndex, bitCriteria);
+    bitIndex--;
+  }
+  return numbers[0];
+}
 
-console.log("Return: ", gammaRateDecimal * epsilonRateDecimal);
+function getLeastCommonBitAtIndex(numbers, bitIndex) {
+  return invertBit(getMostCommonBitAtIndex(numbers, bitIndex));
+}
 
-function binaryArrayToString(binaryArray) {
-  return binaryArray.reduce((binaryString, bit) => {
-    return binaryString + (bit ? "1" : "0");
-  }, "");
+function filterNumbersByBitAtIndex(numbers, bitIndex, bitValue) {
+  return numbers.filter(number => getBitAtIndex(number, bitIndex) === bitValue);
+}
+
+function getBitAtIndex(number, index) {
+  const mask = 1 << index;
+  return (number & mask) !== 0 ? 1 : 0;
+}
+
+function invertBit(bit) {
+  return bit ^ 1;
 }
 
 
